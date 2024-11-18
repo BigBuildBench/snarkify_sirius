@@ -1,0 +1,49 @@
+name: Main Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: clippy
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --all --verbose
+
+    - name: Clippy
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: --all-targets --all-features -- -D warnings
+
+    - name: Install cargo-nextest
+      uses: baptiste0928/cargo-install@v1
+      with:
+        crate: cargo-nextest
+        locked: true
+
+    - name: Tests
+      uses: actions-rs/cargo@v1
+      with:
+        command: nextest
+        args: run --release
+
